@@ -4,7 +4,26 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>JSON Studio – Free Online JSON Formatter, Viewer, Validator & Converter</title>
-<meta name="description" content="Format, validate, minify, compare and convert JSON to YAML, XML, CSV and TypeScript. Tree and table viewer, JSONPath and JSON Schema. Free and private.">
+<meta name="description" content="Free online JSON formatter, viewer and validator. Beautify, minify, compare and convert JSON to YAML, XML, CSV and TypeScript. Tree and table view, JSONPath, JSON Schema. 100% private.">
+<meta name="keywords" content="json formatter, json viewer, json validator, json beautifier, json minify, json to csv, json to yaml, json to xml, jsonpath, json diff, json schema">
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+<meta name="author" content="JSON Studio">
+<meta name="theme-color" content="#00b88d">
+<!-- TODO: replace YOUR-USERNAME with your GitHub username (or your custom domain) in every URL below -->
+<link rel="canonical" href="https://YOUR-USERNAME.github.io/json-studio/">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%A7%A9%3C/text%3E%3C/svg%3E">
+<!-- Paste your Google Search Console HTML-tag verification code below -->
+<meta name="google-site-verification" content="PASTE_YOUR_CODE_HERE">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="JSON Studio">
+<meta property="og:title" content="JSON Studio – Free Online JSON Formatter, Viewer & Validator">
+<meta property="og:description" content="Beautify, validate, compare and convert JSON in your browser. Tree and table view, JSONPath, JSON Schema, YAML, XML, CSV.">
+<meta property="og:url" content="https://YOUR-USERNAME.github.io/json-studio/">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="JSON Studio – Free Online JSON Formatter & Viewer">
+<meta name="twitter:description" content="Beautify, validate, compare and convert JSON. Free and private.">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"JSON Studio","url":"https://YOUR-USERNAME.github.io/json-studio/","applicationCategory":"DeveloperApplication","operatingSystem":"Any","browserRequirements":"Requires JavaScript","description":"Free online JSON formatter, viewer, validator and converter that runs entirely in your browser.","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Is my data uploaded anywhere?","acceptedAnswer":{"@type":"Answer","text":"No. Parsing, formatting and conversion all happen locally in your browser."}},{"@type":"Question","name":"What can JSON Studio do?","acceptedAnswer":{"@type":"Answer","text":"Format, minify, validate with exact error positions, auto-repair, sort keys, flatten, explore as a tree or table, query with JSONPath, compare two documents, validate against a JSON Schema, and convert to YAML, XML, CSV or TypeScript."}},{"@type":"Question","name":"How do I copy a JSON path?","acceptedAnswer":{"@type":"Answer","text":"Click any key in the tree view."}}]}</script>
 <style>
 :root{--bg:#f4f7f6;--panel:#fff;--bar:#1f2d3d;--bart:#e8eef3;--acc:#00b88d;--acc2:#009572;--tx:#1d2733;--mut:#7a8794;--bd:#d9e1e6;--err:#d93a3a;--k:#0b6bcb;--s:#18874a;--n:#c2570c;--b:#8a3ffc;--nl:#8892a0;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#10161c;--panel:#18212a;--bar:#0c1218;--tx:#dbe5ee;--mut:#8497a8;--bd:#2a3744;--k:#6cb4ff;--s:#6fd694;--n:#ffa45c;--b:#c09bff;--nl:#8d9bab}}
@@ -52,7 +71,7 @@ dialog{width:min(720px,94vw);background:var(--panel);color:var(--tx);border:1px 
 </style>
 </head>
 <body>
-<header><h1>{JSON <span>Studio</span>}</h1><span class="sp"></span><button id="theme">🌓 Theme</button></header>
+<header><h1>{JSON <span>Studio</span>} <small style="font-size:12px;font-weight:400;opacity:.7">Online JSON Formatter &amp; Viewer</small></h1><span class="sp"></span><button id="theme">🌓 Theme</button></header>
 <div class="hero">Paste, drop or upload JSON. Everything runs in your browser and nothing is uploaded.</div>
 <div class="bar">
 <button class="p" id="fmt">Format</button><button id="min">Minify</button><button id="srt">Sort keys</button>
@@ -74,7 +93,8 @@ dialog{width:min(720px,94vw);background:var(--panel);color:var(--tx);border:1px 
 <div id="out"></div></section>
 </main>
 <div class="status"><span id="st">Waiting for input…</span><span id="info"></span><span id="path"></span></div>
-<section class="faq"><h2>About JSON Studio</h2><h3>Is my data uploaded anywhere?</h3><p>No. Parsing, formatting and conversion all happen locally in your browser.</p><h3>What can it do?</h3><p>Format, minify, validate with exact error positions, auto-repair, sort keys, flatten, explore as a tree or table, query with JSONPath, compare two documents, validate against a JSON Schema, and convert to YAML, XML, CSV or TypeScript.</p><h3>How do I copy a path?</h3><p>Click any key in the tree view.</p></section>
+<section class="faq"><h2>About JSON Studio</h2><h3>Is my data uploaded anywhere?</h3><p>No. Parsing, formatting and conversion all happen locally in your browser.</p><noscript><p>JSON Studio needs JavaScript enabled to format, validate and convert JSON.</p></noscript>
+<h3>What can JSON Studio do?</h3><p>Format, minify, validate with exact error positions, auto-repair, sort keys, flatten, explore as a tree or table, query with JSONPath, compare two documents, validate against a JSON Schema, and convert to YAML, XML, CSV or TypeScript.</p><h3>How do I copy a path?</h3><p>Click any key in the tree view.</p></section>
 <dialog id="dlg"><div class="dh"><b id="dt"></b><button id="dx">✕ Close</button></div><p class="pv" id="dp"></p><textarea id="d2" spellcheck="false"></textarea><div class="dh"><button class="p" id="dgo">Run</button><button id="dgen">Generate schema from input</button></div><pre id="dres"></pre></dialog>
 <div id="toast"></div>
 <script>
