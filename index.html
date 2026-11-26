@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>JSON Studio – Formatter, Viewer & Validator</title>
+<title>JSON Studio – Free Online JSON Formatter, Viewer, Validator & Converter</title>
+<meta name="description" content="Format, validate, minify, compare and convert JSON to YAML, XML, CSV and TypeScript. Tree and table viewer, JSONPath and JSON Schema. Free and private.">
 <style>
 :root{--bg:#f4f7f6;--panel:#fff;--bar:#1f2d3d;--bart:#e8eef3;--acc:#00b88d;--acc2:#009572;--tx:#1d2733;--mut:#7a8794;--bd:#d9e1e6;--err:#d93a3a;--k:#0b6bcb;--s:#18874a;--n:#c2570c;--b:#8a3ffc;--nl:#8892a0;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#10161c;--panel:#18212a;--bar:#0c1218;--tx:#dbe5ee;--mut:#8497a8;--bd:#2a3744;--k:#6cb4ff;--s:#6fd694;--n:#ffa45c;--b:#c09bff;--nl:#8d9bab}}
@@ -43,6 +44,11 @@ mark{background:#ffd54a;color:#000;border-radius:2px}
 #toast{position:fixed;bottom:calc(20px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);background:var(--bar);color:#fff;padding:8px 16px;border-radius:20px;opacity:0;transition:.25s;pointer-events:none}
 #toast.show{opacity:1}
 .drop{outline:2px dashed var(--acc);outline-offset:-6px}
+body{height:auto;min-height:100%}main{min-height:78vh}
+table{border-collapse:collapse;font:12px ui-monospace,monospace}th,td{border:1px solid var(--bd);padding:3px 8px;text-align:left;vertical-align:top}th{background:var(--bg);position:sticky;top:-10px}
+dialog{width:min(720px,94vw);background:var(--panel);color:var(--tx);border:1px solid var(--bd);border-radius:10px;padding:14px}dialog::backdrop{background:#0008}.dh{display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap}.dh b{margin-right:auto}
+#d2{width:100%;height:160px;font:12px ui-monospace,monospace;background:var(--bg);color:var(--tx);border:1px solid var(--bd);border-radius:6px;padding:8px;margin-bottom:8px}#dres{max-height:220px;overflow:auto;white-space:pre-wrap;font:12px ui-monospace,monospace;margin:8px 0 0}
+.faq{padding:14px 16px 30px;max-width:900px;margin:auto;color:var(--mut)}.faq h2{color:var(--tx);font-size:16px}.faq h3{color:var(--tx);font-size:14px;margin:14px 0 2px}
 </style>
 </head>
 <body>
@@ -52,8 +58,10 @@ mark{background:#ffd54a;color:#000;border-radius:2px}
 <button class="p" id="fmt">Format</button><button id="min">Minify</button><button id="srt">Sort keys</button>
 <select id="ind"><option value="2">2 spaces</option><option value="4">4 spaces</option><option value="t">Tab</option></select>
 <button id="fix" title="Fix single quotes, trailing commas, unquoted keys">Auto-repair</button>
-<button id="esc">Escape</button><button id="unesc">Unescape</button>
-<button id="sample">Sample</button><button id="up">Upload</button><input type="file" id="file" accept=".json,.txt,application/json" hidden>
+<button id="esc">Escape</button><button id="unesc">Unescape</button><button id="flat">Flatten</button><button id="unflat">Unflatten</button>
+<select id="cv"><option value="">Convert to…</option><option value="yaml">YAML</option><option value="xml">XML</option><option value="csv">CSV</option><option value="ts">TypeScript</option></select>
+<button id="cmp">Compare</button><button id="sch">Schema validate</button>
+<button id="sample">Sample</button><button id="url">From URL</button><button id="up">Upload</button><input type="file" id="file" accept=".json,.txt,application/json" hidden>
 <button id="copy">Copy</button><button id="dl">Download</button><button id="clr">Clear</button>
 </div>
 <main>
@@ -61,11 +69,13 @@ mark{background:#ffd54a;color:#000;border-radius:2px}
 <div class="ed"><div id="ln">1</div><textarea id="in" spellcheck="false" placeholder="Paste JSON here, or drop a .json file…"></textarea></div></section>
 <section class="pane"><div class="ph"><b>Output</b>
 <input type="search" id="q" placeholder="Search keys/values">
-<button id="vt" class="on">Tree</button><button id="vc">Code</button>
+<input type="search" id="jp" placeholder="JSONPath: $.items[*].id"><button id="vt" class="on">Tree</button><button id="vc">Code</button><button id="vb">Table</button><button id="vo">Output</button>
 <button id="ex">Expand</button><button id="co">Collapse</button></div>
 <div id="out"></div></section>
 </main>
 <div class="status"><span id="st">Waiting for input…</span><span id="info"></span><span id="path"></span></div>
+<section class="faq"><h2>About JSON Studio</h2><h3>Is my data uploaded anywhere?</h3><p>No. Parsing, formatting and conversion all happen locally in your browser.</p><h3>What can it do?</h3><p>Format, minify, validate with exact error positions, auto-repair, sort keys, flatten, explore as a tree or table, query with JSONPath, compare two documents, validate against a JSON Schema, and convert to YAML, XML, CSV or TypeScript.</p><h3>How do I copy a path?</h3><p>Click any key in the tree view.</p></section>
+<dialog id="dlg"><div class="dh"><b id="dt"></b><button id="dx">✕ Close</button></div><p class="pv" id="dp"></p><textarea id="d2" spellcheck="false"></textarea><div class="dh"><button class="p" id="dgo">Run</button><button id="dgen">Generate schema from input</button></div><pre id="dres"></pre></dialog>
 <div id="toast"></div>
 <script>
 (function(){
@@ -107,7 +117,7 @@ function set(open){tg.textContent=open?'▾':'▸';ch.style.display=open?'':'non
 tg.onclick=h.onclick=function(){set(!w._o)};w._set=set;
 w.appendChild(r);w.appendChild(ch);w.appendChild(tail);set(!!q||d<2);return w}
 function render(){out.innerHTML='';if(!valid){out.innerHTML='<span class="pv">'+(inp.value.trim()?'Fix the error to see the output.':'Output appears here.')+'</span>';return}
-if(view==='code'){var pre=document.createElement('pre');pre.id='code';pre.innerHTML=hl(JSON.stringify(data,null,indent()));out.appendChild(pre);return}
+if(view==='table')return tbl();if(view==='conv'){var p2=document.createElement('pre');p2.id='code';p2.textContent=convText||'Use Convert to… or a JSONPath query.';out.appendChild(p2);return}if(view==='code'){var pre=document.createElement('pre');pre.id='code';pre.innerHTML=hl(JSON.stringify(data,null,indent()));out.appendChild(pre);return}
 var q=$('q').value.trim();var n=node(null,data,'$',q,0,true);out.appendChild(n);
 if(q&&!out.textContent.trim())out.textContent='No matches.'}
 function setAll(open){var f=function(el){if(el._set)el._set(open);Array.prototype.forEach.call(el.children,f)};
@@ -127,11 +137,11 @@ $('sample').onclick=function(){put(JSON.stringify({name:"JSON Studio",version:1.
 $('up').onclick=function(){$('file').click()};
 function readF(f){var r=new FileReader();r.onload=function(){put(r.result)};r.readAsText(f)}
 $('file').onchange=function(){if(this.files[0])readF(this.files[0])};
-$('copy').onclick=function(){var t=view==='code'||!valid?inp.value:inp.value;(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(function(){toast('Copied')},function(){inp.select();document.execCommand('copy');toast('Copied')})};
-$('dl').onclick=function(){var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([inp.value],{type:'application/json'}));a.download='data.json';a.click()};
+$('copy').onclick=function(){var t=view==='conv'?convText:inp.value;(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(function(){toast('Copied')},function(){inp.select();document.execCommand('copy');toast('Copied')})};
+$('dl').onclick=function(){var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([view==='conv'?convText:inp.value]));a.download=view==='conv'?'converted.txt':'data.json';a.click()};
 $('clr').onclick=function(){put('')};
-$('vt').onclick=function(){view='tree';$('vt').className='on';$('vc').className='';render()};
-$('vc').onclick=function(){view='code';$('vc').className='on';$('vt').className='';render()};
+function setView(v){view=v;['vt','vc','vb','vo'].forEach(function(i){$(i).className=''});$({tree:'vt',code:'vc',table:'vb',conv:'vo'}[v]).className='on';render()}$('vt').onclick=function(){setView('tree')};$('vb').onclick=function(){setView('table')};$('vo').onclick=function(){setView('conv')};
+$('vc').onclick=function(){setView('code')};
 $('ex').onclick=function(){setAll(true)};$('co').onclick=function(){setAll(false)};
 var qt;$('q').oninput=function(){clearTimeout(qt);qt=setTimeout(function(){if(view==='tree')render()},200)};
 $('ind').onchange=function(){render()};
@@ -147,6 +157,55 @@ document.addEventListener('drop',function(e){if(e.dataTransfer.files[0])readF(e.
 document.addEventListener('keydown',function(e){if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();fmt()}});
 $('theme').onclick=function(){var r=document.documentElement,d=r.getAttribute('data-theme')==='dark'||(!r.getAttribute('data-theme')&&matchMedia('(prefers-color-scheme:dark)').matches);var n=d?'light':'dark';r.setAttribute('data-theme',n);save('js_theme',n)};
 var th=load('js_theme');if(th)document.documentElement.setAttribute('data-theme',th);
+var convText='',mode='';
+function tbl(){var d=data,rows=Array.isArray(d)?d:(d&&typeof d==='object'?Object.keys(d).map(function(k){return{key:k,value:d[k]}}):[{value:d}]),cols=[];
+rows.forEach(function(r){if(r&&typeof r==='object'&&!Array.isArray(r))Object.keys(r).forEach(function(k){if(cols.indexOf(k)<0)cols.push(k)})});if(!cols.length)cols=['value'];
+var h='<table><thead><tr><th>#</th>'+cols.map(function(c){return'<th>'+esc(c)+'</th>'}).join('')+'</tr></thead><tbody>';
+rows.slice(0,2000).forEach(function(r,i){var o=r&&typeof r==='object'&&!Array.isArray(r);h+='<tr><td>'+i+'</td>'+cols.map(function(c){var v=o?r[c]:(c==='value'?r:undefined);return'<td>'+(v===undefined?'':typeof v==='object'&&v!==null?esc(JSON.stringify(v)):vspan(v,''))+'</td>'}).join('')+'</tr>'});out.innerHTML=h+'</tbody></table>'}
+function kids(o){return o&&typeof o==='object'?Object.keys(o).map(function(k){return o[k]}):[]}
+function desc(o,a){a.push(o);kids(o).forEach(function(x){desc(x,a)});return a}
+function jp(e,root){var re=/(\.\.)?\.?([A-Za-z_$][\w$-]*|\*)|\[(\d+|\*|'[^']*'|"[^"]*")\]/g,t=e.trim().replace(/^\$/,''),cur=[root],m;
+while((m=re.exec(t))){var key=m[2]!==undefined?m[2]:m[3],nx=[];if(/^['"]/.test(key))key=key.slice(1,-1);
+var src=m[1]?cur.reduce(function(a,c){return desc(c,a)},[]):cur;
+src.forEach(function(c){if(key==='*')nx=nx.concat(kids(c));else if(c&&typeof c==='object'&&Object.prototype.hasOwnProperty.call(c,key))nx.push(c[key])});cur=nx}return cur}
+$('jp').oninput=function(){var v=this.value.trim();if(!valid||!v){$('path').textContent='';if(view==='conv')setView('tree');return}
+try{var r=jp(v,data);convText=JSON.stringify(r,null,2);$('path').textContent=r.length+' match(es)';setView('conv')}catch(e){}};
+function flat(o,pre,r){r=r||{};if(o&&typeof o==='object'&&Object.keys(o).length){Object.keys(o).forEach(function(k){flat(o[k],pre?pre+'.'+k:k,r)})}else r[pre||'value']=o;return r}
+function unflat(o){var r={};Object.keys(o).forEach(function(k){var c=r,p=k.split('.');p.forEach(function(s,i){if(i===p.length-1)c[s]=o[k];else c=c[s]=(c[s]&&typeof c[s]==='object')?c[s]:{}})});return r}
+$('flat').onclick=function(){if(!valid)return toast('Invalid JSON');put(JSON.stringify(flat(data),null,indent()));toast('Flattened')};
+$('unflat').onclick=function(){if(!valid||!data||typeof data!=='object')return toast('Needs a JSON object');put(JSON.stringify(unflat(data),null,indent()));toast('Unflattened')};
+function yml(v,i){var p=' '.repeat(i);if(v===null)return'null';if(typeof v!=='object')return typeof v==='string'?(/^[\w .\/-]+$/.test(v)&&!/^(true|false|null|\d.*)$/.test(v)&&v.trim()===v?v:JSON.stringify(v)):String(v);
+var ks=Object.keys(v),a=Array.isArray(v);if(!ks.length)return a?'[]':'{}';
+return ks.map(function(k){var x=v[k],pre=a?'- ':JSON.stringify(k).replace(/^"([\w-]+)"$/,'$1')+':';
+if(x&&typeof x==='object'&&Object.keys(x).length)return a?p+'-\n'+yml(x,i+2):p+pre+'\n'+yml(x,i+2);return p+pre+(a?'':' ')+yml(x,i)}).join('\n')}
+function xml(v,n,i){var p='  '.repeat(i),t=String(n).replace(/[^\w.-]/g,'_').replace(/^(\d)/,'_$1');if(Array.isArray(v))return v.map(function(x){return xml(x,t,i)}).join('\n');
+if(v&&typeof v==='object')return p+'<'+t+'>\n'+Object.keys(v).map(function(k){return xml(v[k],k,i+1)}).join('\n')+'\n'+p+'</'+t+'>';return p+'<'+t+'>'+esc(v===null?'':v)+'</'+t+'>'}
+function cell(x){x=x===undefined||x===null?'':typeof x==='object'?JSON.stringify(x):String(x);return /[",\n]/.test(x)?'"'+x.replace(/"/g,'""')+'"':x}
+function csv(v){var rows=(Array.isArray(v)?v:[v]).map(function(r){return flat(r)}),cols=[];rows.forEach(function(r){Object.keys(r).forEach(function(k){if(cols.indexOf(k)<0)cols.push(k)})});
+return[cols.map(cell).join(',')].concat(rows.map(function(r){return cols.map(function(c){return cell(r[c])}).join(',')})).join('\n')}
+function ts(v,i){var p='  '.repeat(i);if(v===null)return'null';if(Array.isArray(v)){var u=[];v.forEach(function(x){var t=ts(x,i);if(u.indexOf(t)<0)u.push(t)});return(u.length>1?'('+u.join(' | ')+')':u[0]||'any')+'[]'}
+if(typeof v==='object')return'{\n'+Object.keys(v).map(function(k){return p+'  '+(/^[A-Za-z_$][\w$]*$/.test(k)?k:JSON.stringify(k))+': '+ts(v[k],i+1)+';'}).join('\n')+'\n'+p+'}';return typeof v}
+$('cv').onchange=function(){var f=this.value;this.value='';if(!f)return;if(!valid)return toast('Invalid JSON');
+convText=f==='yaml'?yml(data,0):f==='xml'?'<?xml version="1.0"?>\n'+xml(Array.isArray(data)?{item:data}:data,'root',0):f==='csv'?csv(data):(data&&typeof data==='object'&&!Array.isArray(data)?'interface Root '+ts(data,0):'type Root = '+ts(data,0));setView('conv');toast('Converted. Copy or Download now saves this output.')};
+function sch(v){if(v===null)return{type:'null'};if(Array.isArray(v))return{type:'array',items:v.length?sch(v[0]):{}};if(typeof v==='object'){var p={};Object.keys(v).forEach(function(k){p[k]=sch(v[k])});return{type:'object',properties:p,required:Object.keys(v)}}return{type:Number.isInteger(v)?'integer':typeof v}}
+function val(v,s,p,e){if(!s||typeof s!=='object')return e;var t=v===null?'null':Array.isArray(v)?'array':typeof v;
+if(s.type&&![].concat(s.type).some(function(x){return x===t||(x==='integer'&&t==='number'&&Number.isInteger(v))}))e.push(p+': expected '+s.type+', got '+t);
+if(s.enum&&s.enum.map(function(x){return JSON.stringify(x)}).indexOf(JSON.stringify(v))<0)e.push(p+': not in enum');
+if(t==='number'){if(s.minimum!==undefined&&v<s.minimum)e.push(p+': below minimum '+s.minimum);if(s.maximum!==undefined&&v>s.maximum)e.push(p+': above maximum '+s.maximum)}
+if(t==='string'){if(s.minLength!==undefined&&v.length<s.minLength)e.push(p+': too short');if(s.maxLength!==undefined&&v.length>s.maxLength)e.push(p+': too long');if(s.pattern&&!new RegExp(s.pattern).test(v))e.push(p+': pattern mismatch')}
+if(t==='object'){(s.required||[]).forEach(function(k){if(!(k in v))e.push(p+'.'+k+': required property missing')});Object.keys(s.properties||{}).forEach(function(k){if(k in v)val(v[k],s.properties[k],p+'.'+k,e)})}
+if(t==='array'&&s.items)v.forEach(function(x,i){val(x,s.items,p+'['+i+']',e)});return e}
+function diff(a,b,p,r){var ta=a&&typeof a==='object',tb=b&&typeof b==='object';
+if(ta&&tb&&Array.isArray(a)===Array.isArray(b)){var ks={};Object.keys(a).concat(Object.keys(b)).forEach(function(k){ks[k]=1});Object.keys(ks).forEach(function(k){var q=p+(Array.isArray(a)?'['+k+']':'.'+k);if(!(k in a))r.push('+ '+q+' = '+JSON.stringify(b[k]));else if(!(k in b))r.push('− '+q+' (was '+JSON.stringify(a[k])+')');else diff(a[k],b[k],q,r)})}
+else if(JSON.stringify(a)!==JSON.stringify(b))r.push('~ '+p+': '+JSON.stringify(a)+' → '+JSON.stringify(b));return r}
+function openD(m){mode=m;var T={diff:['Compare JSON','Left input is A. Paste B below, then Run.'],schema:['Validate against JSON Schema','Paste a schema (type, properties, required, items, enum, minimum, maximum, minLength, maxLength, pattern).'],url:['Load JSON from URL','Paste a URL. The site must allow cross-origin requests (CORS).']}[m];
+$('dt').textContent=T[0];$('dp').textContent=T[1];$('dgen').style.display=m==='schema'?'':'none';$('d2').value='';$('dres').textContent='';$('dlg').showModal()}
+$('cmp').onclick=function(){openD('diff')};$('sch').onclick=function(){openD('schema')};$('url').onclick=function(){openD('url')};$('dx').onclick=function(){$('dlg').close()};
+$('dgen').onclick=function(){if(!valid)return toast('Invalid JSON');var o=sch(data);o.$schema='http://json-schema.org/draft-07/schema#';$('d2').value=JSON.stringify(o,null,2)};
+$('dgo').onclick=function(){var r=$('dres');if(mode==='url'){r.textContent='Loading…';return fetch($('d2').value.trim()).then(function(x){return x.text()}).then(function(t){put(t);$('dlg').close()}).catch(function(){r.textContent='Could not load. The host may block cross-origin requests, or this page may be running in a restricted preview.'})}
+if(!valid)return r.textContent='The left input is not valid JSON.';var b;try{b=JSON.parse($('d2').value)}catch(e){return r.textContent='Second box: '+e.message}
+if(mode==='diff'){var d=diff(data,b,'$',[]);r.textContent=d.length?d.length+' difference(s)\n\n'+d.join('\n'):'✔ Identical'}
+else{try{var er=val(data,b,'$',[]);r.textContent=er.length?'✖ '+er.length+' error(s)\n\n'+er.join('\n'):'✔ Valid against schema'}catch(x){r.textContent=x.message}}};
 var s=load('js_in');if(s){inp.value=s}lines();parse();
 })();
 </script>
